@@ -37,7 +37,7 @@ jobs:
           # Default: monitor the SAME repository containing this workflow.
           # To monitor another PUBLIC GitHub repository, replace the value below
           # with "some-owner/some-repo".
-          MONITOR_REPO: ${{ github.repository }}
+          MONITOR_REPO: "https://github.com/mzhoolideh/KNTU_CP_2026"
           # Leave empty to use the target repository's default branch.
-          MONITOR_BRANCH: ""
+          MONITOR_BRANCH: "main"
         run: python watcher.py
