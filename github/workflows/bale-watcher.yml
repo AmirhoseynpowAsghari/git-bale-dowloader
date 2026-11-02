@@ -1,43 +1,37 @@
-name: Send GitHub changes to Bale
+
+    
+  
+name: Interactive Bale GitHub Downloader
 
 on:
-  schedule:
-    # Every day at 04:23 UTC (07:53 in Iran)
-    - cron: "23 4 * * *"
   workflow_dispatch:
+  schedule:
+    # Every 5 minutes, starting at minute 3. GitHub can delay scheduled runs.
+    - cron: '3-58/5 * * * *'
 
-# Needed to save the last successfully handled commit on a separate branch.
 permissions:
   contents: write
 
 concurrency:
-  group: bale-github-watcher
+  group: bale-interactive-bot
   cancel-in-progress: false
 
 jobs:
-  send-changes:
+  serve-bale:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 20
     steps:
-      - name: Checkout watcher source
+      - name: Check out bot source
         uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: '3.12'
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
-      - name: Check changes and send to Bale
+      - name: Poll Bale and deliver repo updates
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_SHA: ${{ github.sha }}
           BALE_BOT_TOKEN: ${{ secrets.BALE_BOT_TOKEN }}
-          BALE_CHAT_ID: ${{ secrets.BALE_CHAT_ID }}
-          # Default: monitor the SAME repository containing this workflow.
-          # To monitor another PUBLIC GitHub repository, replace the value below
-          # with "some-owner/some-repo".
-          MONITOR_REPO: "https://github.com/mzhoolideh/KNTU_CP_2026"
-          # Leave empty to use the target repository's default branch.
-          MONITOR_BRANCH: "main"
-        run: python watcher.py
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python bot.py
+
