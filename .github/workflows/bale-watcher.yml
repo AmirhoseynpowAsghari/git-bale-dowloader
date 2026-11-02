@@ -1,0 +1,43 @@
+name: Send GitHub changes to Bale
+
+on:
+  schedule:
+    # Every day at 04:23 UTC (07:53 in Iran)
+    - cron: "23 4 * * *"
+  workflow_dispatch:
+
+# Needed to save the last successfully handled commit on a separate branch.
+permissions:
+  contents: write
+
+concurrency:
+  group: bale-github-watcher
+  cancel-in-progress: false
+
+jobs:
+  send-changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout watcher source
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Check changes and send to Bale
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SHA: ${{ github.sha }}
+          BALE_BOT_TOKEN: ${{ secrets.BALE_BOT_TOKEN }}
+          BALE_CHAT_ID: ${{ secrets.BALE_CHAT_ID }}
+          # Default: monitor the SAME repository containing this workflow.
+          # To monitor another PUBLIC GitHub repository, replace the value below
+          # with "some-owner/some-repo".
+          MONITOR_REPO: ${{ github.repository }}
+          # Leave empty to use the target repository's default branch.
+          MONITOR_BRANCH: ""
+        run: python watcher.py
