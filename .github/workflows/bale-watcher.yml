@@ -1,13 +1,10 @@
-
-    
-  
 name: Interactive Bale GitHub Downloader
 
 on:
   workflow_dispatch:
   schedule:
-    # Every 5 minutes, starting at minute 3. GitHub can delay scheduled runs.
-    - cron: '3-58/5 * * * *'
+    # Best-effort every five minutes; GitHub may delay or skip scheduled runs.
+    - cron: "3-58/5 * * * *"
 
 permissions:
   contents: write
@@ -26,12 +23,22 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
       - name: Install dependencies
-        run: python -m pip install -r requirements.txt
-      - name: Poll Bale and deliver repo updates
+        run: python -m pip install -r requirements-dev.txt
+      - name: Lint
+        run: python -m ruff check .
+      - name: Test before touching live state
+        run: python -m pytest -q
+      - name: Poll Bale and deliver repository updates
         env:
           BALE_BOT_TOKEN: ${{ secrets.BALE_BOT_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python bot.py
-
+          # Optional repository variable; defaults to false, never deletes a
+          # webhook without an explicit opt-in.
+          BALE_RESET_WEBHOOK: ${{ vars.BALE_RESET_WEBHOOK || 'false' }}
+        run: python -m bale_downloader
