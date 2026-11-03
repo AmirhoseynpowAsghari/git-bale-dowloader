@@ -217,8 +217,25 @@ class Bale:
         self.call("sendDocument", {"chat_id": chat_id, "caption": caption},
                   {"document": (filename, io.BytesIO(data), "application/zip")})
 
+    
     def answer_callback(self, query_id: str) -> None:
-        self.call("answerCallbackQuery", {"callback_query_id": query_id})
+        try:
+            self.call(
+                "answerCallbackQuery",
+                {"callback_query_id": query_id}
+            )
+        except FriendlyError as exc:
+            error = str(exc).lower()
+    
+            if (
+                "query is too old" in error
+                or "query id is invalid" in error
+            ):
+                print("Ignored expired Bale callback query")
+                return
+    
+            raise
+    
 
 
 class Storage:
